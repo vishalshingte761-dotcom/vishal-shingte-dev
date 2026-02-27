@@ -6,8 +6,7 @@ This is my official portfolio website where I showcase my journey as an MCA stud
 
 ## 🌐 Live Demo
 You can view the live website here: 
-**[https://vishalshingte761-dotcom.github.io/](https://vishalshingte761-dotcom.github.io/)**
-
+https://vishalshingte761-dotcom.github.io/vishal-shingte-dev/
 ## 🛠️ Features
 - **Fully Responsive:** Works perfectly on Mobile, Tablet, and Desktop.
 - **Modern UI/UX:** Clean design using Inter font and professional color palette.
