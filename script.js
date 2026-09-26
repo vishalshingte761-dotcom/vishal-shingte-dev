@@ -1,78 +1,114 @@
-// --- VISHAL SHINGTE PORTFOLIO - MAIN JS ---
 document.addEventListener('DOMContentLoaded', () => {
+    const root = document.documentElement;
+    const nav = document.getElementById('navMenu');
+    const menuBtn = document.getElementById('menuBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const scrollProgress = document.getElementById('scrollProgress');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxCaption = document.getElementById('lightboxCaption');
+    const lightboxClose = document.getElementById('lightboxClose');
 
-    // 1. Mobile Menu Toggle Logic
-    const menuBtn = document.getElementById('menu-btn');
-    const navLinksContainer = document.getElementById('nav-links');
+    // Theme preference
+    const savedTheme = localStorage.getItem('vishal-theme');
+    if (savedTheme === 'dark') root.dataset.theme = 'dark';
+    updateThemeIcon();
 
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            navLinksContainer.classList.toggle('active');
+    themeToggle?.addEventListener('click', () => {
+        root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('vishal-theme', root.dataset.theme);
+        updateThemeIcon();
+    });
 
-            // Icon toggle: Bar to X
-            const icon = menuBtn.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-xmark');
-        });
+    function updateThemeIcon() {
+        const icon = themeToggle?.querySelector('i');
+        if (!icon) return;
+        const dark = root.dataset.theme === 'dark';
+        icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        themeToggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
     }
 
-    // Close menu when a link is clicked
-    const links = document.querySelectorAll('.nav-links a');
-    links.forEach(link => {
-        link.addEventListener('click', () => {
-            navLinksContainer.classList.remove('active');
-            const icon = menuBtn.querySelector('i');
-            icon.classList.add('fa-bars');
-            icon.classList.remove('fa-xmark');
+    // Mobile navigation
+    menuBtn?.addEventListener('click', () => {
+        const open = nav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', String(open));
+        document.body.classList.toggle('menu-open', open);
+    });
+
+    nav?.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', (event) => {
+            const href = link.getAttribute('href');
+            if (!href?.startsWith('#')) return;
+            const target = document.querySelector(href);
+            if (!target) return;
+            event.preventDefault();
+            const offset = 84;
+            window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' });
+            nav.classList.remove('open');
+            menuBtn?.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('menu-open');
         });
     });
 
-    // 2. Smooth Scroll for Nav Links
-    links.forEach(link => {
-        link.addEventListener('click', (e) => {
-            const targetId = link.getAttribute('href');
-            if (targetId.startsWith('#')) {
-                e.preventDefault();
-                const targetSection = document.querySelector(targetId);
-                if (targetSection) {
-                    window.scrollTo({
-                        top: targetSection.offsetTop - 70,
-                        behavior: 'smooth'
-                    });
+    // Scroll progress
+    const updateProgress = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        scrollProgress.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // Reveal animations
+    const revealNodes = document.querySelectorAll('.reveal');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+        revealNodes.forEach(node => node.classList.add('visible'));
+    } else if ('IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
                 }
-            }
-        });
-    });
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealNodes.forEach(node => revealObserver.observe(node));
+    } else {
+        revealNodes.forEach(node => node.classList.add('visible'));
+    }
 
-    // 3. Navbar Appearance on Scroll
-    const nav = document.querySelector('nav');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            nav.style.boxShadow = '0 5px 20px rgba(0,0,0,0.1)';
-            nav.style.background = 'white';
-        } else {
-            nav.style.boxShadow = 'none';
-            nav.style.background = 'rgba(255, 255, 255, 0.95)';
+    // Image lightbox
+    const lightboxTriggers = document.querySelectorAll('[data-lightbox]');
+    function openLightbox(src, caption) {
+        lightboxImage.src = src;
+        lightboxImage.alt = caption || 'Portfolio image';
+        lightboxCaption.textContent = caption || '';
+        lightbox.classList.add('open');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('menu-open');
+        lightboxClose.focus();
+    }
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        lightbox.setAttribute('aria-hidden', 'true');
+        lightboxImage.src = '';
+        document.body.classList.remove('menu-open');
+    }
+    lightboxTriggers.forEach(trigger => {
+        trigger.addEventListener('click', () => openLightbox(trigger.dataset.lightbox, trigger.dataset.caption));
+    });
+    lightboxClose?.addEventListener('click', closeLightbox);
+    document.querySelector('[data-close-lightbox]')?.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            if (lightbox.classList.contains('open')) closeLightbox();
+            if (nav.classList.contains('open')) {
+                nav.classList.remove('open');
+                menuBtn?.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('menu-open');
+            }
         }
     });
 
-    // 4. Reveal Animation for Sections
-    const observerOptions = { threshold: 0.15 };
-    const sectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll('section').forEach(section => {
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(30px)';
-        section.style.transition = 'all 0.8s ease-out';
-        sectionObserver.observe(section);
-    });
-
-    console.log("Vishal's Portfolio is Live & Responsive! 🚀");
+    console.log('Vishal Shingte portfolio — enhanced, responsive, and ready.');
 });
